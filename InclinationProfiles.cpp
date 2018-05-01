@@ -119,9 +119,13 @@ static void renderInclinationUI()
 {
 	if (ImGui::CollapsingHeader("Inclination Profiles")) 
 	{
-		ImGui::Checkbox("Pawn Enabled", &mainPawnEnabled);
-		ImGui::Checkbox("Pawn1 Enabled", &pawn1Enabled);
-		ImGui::Checkbox("Pawn2 Enabled", &pawn2Enabled);
+		ImGui::Columns(3, nullptr, false);
+		ImGui::Checkbox("Main Pawn Enabled", &mainPawnEnabled);
+		ImGui::NextColumn();
+		ImGui::Checkbox("Pawn 1 Enabled", &pawn1Enabled);
+		ImGui::NextColumn();
+		ImGui::Checkbox("Pawn 2 Enabled", &pawn2Enabled);
+		ImGui::Columns();
 
 		for (int vocation = 0; vocation < Vocation::Enum::Length; ++vocation) 
 		{
