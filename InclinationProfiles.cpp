@@ -44,15 +44,15 @@ namespace Inclination
 
 static char const * const inclinationNames[Inclination::Enum::Length] =
 {
-	"Acquisitor",
-	"Challenger",
-	"Guardian",
+	"Scather",
 	"Medicant",
 	"Mitigator",
+	"Challenger",
+	"Utilitarian",
+	"Guardian",
 	"Nexus",
 	"Pioneer",
-	"Scather",
-	"Utilitarian"
+	"Acquisitor"
 };
 
 static char const * const vocationNames[Vocation::Enum::Length] =
@@ -87,9 +87,10 @@ static void writeInclinations(int pawnIndex)
 	const int statsOffset = baseOffset + 0x96C;
 	const int inclinationsOffset = statsOffset + 0x1224;
 	const int vocationOffset = baseOffset + 0x6E0;
-	const UINT32 vocation = *GetBasePtr<UINT32>(vocationOffset);
+	const UINT32 vocation = *GetBasePtr<UINT32>(vocationOffset) - 1;
 
-	for (int inclination = 0; inclination < Inclination::Enum::Length; ++inclination) {
+	for (int inclination = 0; inclination < Inclination::Enum::Length; ++inclination) 
+	{
 		*(GetBasePtr<float>(inclinationsOffset + inclination * 12)) = profiles[vocation][inclination];
 	}
 }
@@ -117,7 +118,7 @@ static void renderInclinationUI()
 			}
 		}
 
-		if (ImGui::Button("Save")) 
+		if (ImGui::Button("Save Settings")) 
 		{
 			for (int vocation = 0; vocation < Vocation::Enum::Length; ++vocation)
 			{
