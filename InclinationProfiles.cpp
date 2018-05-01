@@ -1,42 +1,57 @@
-#include "InclinationProfiles.h"
 #include "stdafx.h"
+#include "InclinationProfiles.h"
 #include "ImGui/imgui_internal.h"
 
 const float DEFAULT = 500.0;
-bool pawnEnabled = false;
-bool pawn1Enabled = false;
-bool pawn2Enabled = false;
+static bool pawnEnabled = false;
+static bool pawn1Enabled = false;
+static bool pawn2Enabled = false;
 
-enum Vocations
+namespace Vocation {
+	enum Enum
+	{
+		Assassin = 0,
+		Fighter,
+		MagickArcher,
+		MysticKnight,
+		Ranger,
+		Sorcerer,
+		Strider,
+		Warrior,
+		Last = Warrior,
+		Length = Last + 1
+	};
+}
+
+namespace Inclination
 {
-	Assassin = 0,
-	Fighter = 1,
-	MagickArcher = 2,
-	MysticKnight = 3,
-	Ranger = 4,
-	Sorcerer = 5,
-	Strider = 6,
-	Warrior = 7,
-	Last = Warrior,
-	Length = Last + 1
-};
+	enum Enum
+	{
+		Acquisitor = 0,
+		Challenger,
+		Guardian,
+		Medicant,
+		Mitigator,
+		Nexus,
+		Pioneer,
+		Scather,
+		Utilitarian,
+		Last = Utilitarian,
+		Length = Last + 1
+	};
+}
 
-enum Inclinations 
-{
-	Acquisitor = 0,
-	Challenger = 1,
-	Guardian = 2,
-	Medicant = 3,
-	Mitigator = 4,
-	Nexus = 5,
-	Pioneer = 6,
-	Scather = 7,
-	Utilitarian = 8,
-	Last = Utilitarian,
-	Length = Last + 1
-};
+namespace Pawn {
+	enum Enum {
+		Main = 0,
+		Pawn1,
+		Pawn2,
+		Last = Pawn2,
+		Length = Last + 1
+	};
+}
 
-const char * const inclinationNames[Inclinations::Length]  =
+static char const * const inclinationNames[Inclination::Enum::Length]  =
 {
 	"Acquisitor",
 	"Challenger",
@@ -49,7 +64,7 @@ const char * const inclinationNames[Inclinations::Length]  =
 	"Utilitarian"
 };
 
-const char * const vocationNames[Vocations::Length] =
+static char const * const vocationNames[Vocation::Enum::Length] =
 {
 	"Assassin",
 	"Fighter",
@@ -61,7 +76,7 @@ const char * const vocationNames[Vocations::Length] =
 	"Warrior",
 };
 
-float profiles[Vocations::Length][Inclinations::Length] = 
+static float profiles[Vocation::Enum::Length][Inclination::Enum::Length] =
 {
 	{ DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT },
 	{ DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT },
@@ -73,25 +88,60 @@ float profiles[Vocations::Length][Inclinations::Length] =
 	{ DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT }
 };
 
+static void writeStats(Pawn::Enum pawn, int vocation) 
+{
+
+}
+
 static void renderInclinationUI()
 {
 	if (ImGui::CollapsingHeader("Inclination Profiles")) 
 	{
 		if (ImGui::Checkbox("Pawn Enabled", &pawnEnabled))
+			config.setBool("inclinationProfiles", "pawnEnabled", pawnEnabled);
+
+		if (ImGui::Checkbox("Pawn1 Enabled", &pawn1Enabled))
+			config.setBool("inclinationProfiles", "pawn1Enabled", pawn1Enabled);
+
+		if (ImGui::Checkbox("Pawn2 Enabled", &pawn2Enabled))
+			config.setBool("inclinationProfiles", "pawn2Enabled", pawn2Enabled);
+
+		for (int vocation = 0; vocation < Vocation::Enum::Length; ++vocation) 
 		{
-			config.setBool()
+			const char * const vocationName = vocationNames[vocation];
+
+			if (ImGui::TreeNode(vocationName))
+			{
+				for (int inclination = 0; inclination < Inclination::Enum::Length; ++inclination)
+				{
+					ImGui::InputFloat(inclinationNames[inclination], &profiles[vocation][inclination]);
+				}
+
+				ImGui::TreePop();
+			}
+		}
+
+		if (ImGui::Button("Save")) 
+		{
+			for (int vocation = 0; vocation < Vocation::Enum::Length; ++vocation)
+			{
+				auto values = std::vector<float>(profiles[vocation], std::end(profiles[vocation]));
+				config.setFloats("inclinationProfiles", vocationNames[vocation], std::move(values));
+			}
 		}
 	}
 }
 
 void Hooks::InclinationProfiles()
 {
-	for (int i = 0; i < Vocations::Length; ++i) 
+	for (int vocation = 0; vocation < Vocation::Enum::Length; ++vocation)
 	{
-		auto inclinations = config.getFloats("inclinationProfiles", vocationNames[i]);
-		std::copy(inclinations.begin(), inclinations.end(), profiles[i]);
-		InGameUIAdd(renderInclinationUI);
+		auto values = config.getFloats("inclinationProfiles", vocationNames[vocation]);
+		std::copy(values.begin(), values.end(), profiles[vocation]);
 	}
 
-	// pawnEnabled = config.getBool("inclinationProfiles", )
+	pawnEnabled = config.getBool("inclinationProfiles", "pawnEnabled", false);
+	pawn1Enabled = config.getBool("inclinationProfiles", "pawn1Enabled", false);
+	pawn2Enabled = config.getBool("inclinationProfiles", "pawn2Enabled", false);
+	InGameUIAdd(renderInclinationUI);
 }
