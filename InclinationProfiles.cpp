@@ -3,22 +3,23 @@
 #include "ImGui/imgui_internal.h"
 
 const float DEFAULT = 500.0;
-static bool pawnEnabled = false;
+static bool mainPawnEnabled = false;
 static bool pawn1Enabled = false;
 static bool pawn2Enabled = false;
 
 namespace Vocation {
 	enum Enum
 	{
-		Assassin = 0,
-		Fighter,
-		MagickArcher,
+		Fighter = 0,
+		Strider,
+		Mage,
 		MysticKnight,
+		Assassin,
+		MagickArcher,
+		Warrior,
 		Ranger,
 		Sorcerer,
-		Strider,
-		Warrior,
-		Last = Warrior,
+		Last = Sorcerer,
 		Length = Last + 1
 	};
 }
@@ -27,31 +28,21 @@ namespace Inclination
 {
 	enum Enum
 	{
-		Acquisitor = 0,
-		Challenger,
-		Guardian,
+		Scather = 0,
 		Medicant,
 		Mitigator,
+		Challenger,
+		Utilitarian,
+		Guardian,
 		Nexus,
 		Pioneer,
-		Scather,
-		Utilitarian,
-		Last = Utilitarian,
+		Acquisitor,
+		Last = Acquisitor,
 		Length = Last + 1
 	};
 }
 
-namespace Pawn {
-	enum Enum {
-		Main = 0,
-		Pawn1,
-		Pawn2,
-		Last = Pawn2,
-		Length = Last + 1
-	};
-}
-
-static char const * const inclinationNames[Inclination::Enum::Length]  =
+static char const * const inclinationNames[Inclination::Enum::Length] =
 {
 	"Acquisitor",
 	"Challenger",
@@ -66,14 +57,15 @@ static char const * const inclinationNames[Inclination::Enum::Length]  =
 
 static char const * const vocationNames[Vocation::Enum::Length] =
 {
-	"Assassin",
 	"Fighter",
-	"MagickArcher",
-	"MysticKnight",
-	"Ranger",
-	"Sorcerer",
 	"Strider",
+	"Mage",
+	"MysticKnight",
+	"Assassin",
+	"MagickArcher",
 	"Warrior",
+	"Ranger",
+	"Sorcerer"
 };
 
 static float profiles[Vocation::Enum::Length][Inclination::Enum::Length] =
@@ -88,23 +80,27 @@ static float profiles[Vocation::Enum::Length][Inclination::Enum::Length] =
 	{ DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT }
 };
 
-static void writeStats(Pawn::Enum pawn, int vocation) 
+static void writeInclinations(int pawnIndex)
 {
+	const int offset = 0x7F0 + pawnIndex * 0x1660;
+	const int baseOffset = 0xA7000 + offset;
+	const int statsOffset = baseOffset + 0x96C;
+	const int inclinationsOffset = statsOffset + 0x1224;
+	const int vocationOffset = baseOffset + 0x6E0;
+	const UINT32 vocation = *GetBasePtr<UINT32>(vocationOffset);
 
+	for (int inclination = 0; inclination < Inclination::Enum::Length; ++inclination) {
+		*(GetBasePtr<float>(inclinationsOffset + inclination * 12)) = profiles[vocation][inclination];
+	}
 }
 
 static void renderInclinationUI()
 {
 	if (ImGui::CollapsingHeader("Inclination Profiles")) 
 	{
-		if (ImGui::Checkbox("Pawn Enabled", &pawnEnabled))
-			config.setBool("inclinationProfiles", "pawnEnabled", pawnEnabled);
-
-		if (ImGui::Checkbox("Pawn1 Enabled", &pawn1Enabled))
-			config.setBool("inclinationProfiles", "pawn1Enabled", pawn1Enabled);
-
-		if (ImGui::Checkbox("Pawn2 Enabled", &pawn2Enabled))
-			config.setBool("inclinationProfiles", "pawn2Enabled", pawn2Enabled);
+		ImGui::Checkbox("Pawn Enabled", &mainPawnEnabled);
+		ImGui::Checkbox("Pawn1 Enabled", &pawn1Enabled);
+		ImGui::Checkbox("Pawn2 Enabled", &pawn2Enabled);
 
 		for (int vocation = 0; vocation < Vocation::Enum::Length; ++vocation) 
 		{
@@ -127,9 +123,21 @@ static void renderInclinationUI()
 			{
 				auto values = std::vector<float>(profiles[vocation], std::end(profiles[vocation]));
 				config.setFloats("inclinationProfiles", vocationNames[vocation], std::move(values));
+				config.setBool("inclinationProfiles", "pawnEnabled", mainPawnEnabled);
+				config.setBool("inclinationProfiles", "pawn1Enabled", pawn1Enabled);
+				config.setBool("inclinationProfiles", "pawn2Enabled", pawn2Enabled);
 			}
 		}
 	}
+
+	if (mainPawnEnabled)
+		writeInclinations(0);
+
+	if (pawn1Enabled)
+		writeInclinations(1);
+	
+	if (pawn2Enabled)
+		writeInclinations(2);
 }
 
 void Hooks::InclinationProfiles()
@@ -140,7 +148,7 @@ void Hooks::InclinationProfiles()
 		std::copy(values.begin(), values.end(), profiles[vocation]);
 	}
 
-	pawnEnabled = config.getBool("inclinationProfiles", "pawnEnabled", false);
+	mainPawnEnabled = config.getBool("inclinationProfiles", "pawnEnabled", false);
 	pawn1Enabled = config.getBool("inclinationProfiles", "pawn1Enabled", false);
 	pawn2Enabled = config.getBool("inclinationProfiles", "pawn2Enabled", false);
 	InGameUIAdd(renderInclinationUI);
