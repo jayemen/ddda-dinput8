@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include <set>
 #include "InclinationProfiles.h"
 #include "ImGui/imgui_internal.h"
 
@@ -64,14 +63,6 @@ static char const * const vocationNames[Vocation::Enum::Length] =
 	"Sorcerer"
 };
 
-const float DEFAULT = 500.f;
-const std::set<int> NON_PAWN_VOCATIONS = 
-{
-	Vocation::Enum::Assassin,
-	Vocation::Enum::MysticKnight,
-	Vocation::Enum::MagickArcher,
-};
-
 const bool VALID_PAWN_VOCATIONS[Vocation::Enum::Length] = {
 	true,  // Fighter
 	true,  // Strider
@@ -87,6 +78,8 @@ const bool VALID_PAWN_VOCATIONS[Vocation::Enum::Length] = {
 static bool mainPawnEnabled = false;
 static bool pawn1Enabled = false;
 static bool pawn2Enabled = false;
+
+const float DEFAULT = 500.f;
 
 static float profiles[Vocation::Enum::Length][Inclination::Enum::Length] =
 {
