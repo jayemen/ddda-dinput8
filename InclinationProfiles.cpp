@@ -2,7 +2,7 @@
 #include "InclinationProfiles.h"
 #include "ImGui/imgui_internal.h"
 
-const float DEFAULT = 500.0;
+const float DEFAULT = 500.f;
 static bool mainPawnEnabled = false;
 static bool pawn1Enabled = false;
 static bool pawn2Enabled = false;
@@ -80,7 +80,7 @@ static float profiles[Vocation::Enum::Length][Inclination::Enum::Length] =
 	{ DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT }
 };
 
-static void writeInclinations(int pawnIndex)
+static void applyInclinations(int pawnIndex)
 {
 	const int offset = 0x7F0 + pawnIndex * 0x1660;
 	const int baseOffset = 0xA7000 + offset;
@@ -110,9 +110,7 @@ static void renderInclinationUI()
 			if (ImGui::TreeNode(vocationName))
 			{
 				for (int inclination = 0; inclination < Inclination::Enum::Length; ++inclination)
-				{
-					ImGui::InputFloat(inclinationNames[inclination], &profiles[vocation][inclination]);
-				}
+					ImGui::InputFloat(inclinationNames[inclination], &profiles[vocation][inclination], 0.0f, 0.0f, 0);
 
 				ImGui::TreePop();
 			}
@@ -123,7 +121,7 @@ static void renderInclinationUI()
 			for (int vocation = 0; vocation < Vocation::Enum::Length; ++vocation)
 			{
 				auto values = std::vector<float>(profiles[vocation], std::end(profiles[vocation]));
-				config.setFloats("inclinationProfiles", vocationNames[vocation], std::move(values));
+				config.setFloats("inclinationProfiles", vocationNames[vocation], std::move(values), 0);
 				config.setBool("inclinationProfiles", "pawnEnabled", mainPawnEnabled);
 				config.setBool("inclinationProfiles", "pawn1Enabled", pawn1Enabled);
 				config.setBool("inclinationProfiles", "pawn2Enabled", pawn2Enabled);
@@ -131,14 +129,14 @@ static void renderInclinationUI()
 		}
 	}
 
-	if (mainPawnEnabled)
-		writeInclinations(0);
-
-	if (pawn1Enabled)
-		writeInclinations(1);
+	if (mainPawnEnabled) 
+		applyInclinations(0);
 	
-	if (pawn2Enabled)
-		writeInclinations(2);
+	if (pawn1Enabled) 
+		applyInclinations(1);
+	
+	if (pawn2Enabled) 
+		applyInclinations(2);
 }
 
 void Hooks::InclinationProfiles()
